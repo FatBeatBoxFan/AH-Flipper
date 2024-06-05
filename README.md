@@ -1,5 +1,10 @@
 # Hypixel Auction House Flipper
 
+# Changes
+- Uses a different and more accurate JSON for retrieving average auction prices
+- Added the average price to message description
+- Add minAvgProfit to config which allows for the user to set a minimum profit based on the average price 
+
 # Features:
 
 - Custom filters (Catergory, Name, Enchantment..)
