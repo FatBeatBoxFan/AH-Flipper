@@ -1,11 +1,12 @@
 {
   "data": {
-    "threadsToUse/speed": 64,
+    "threadsToUse/speed": 48,
 
-    "minSnipeProfit": 100000,
-    "minCraftProfit": 100000,
+    "minSnipeProfit": 900000,
+    "minAvgProfit": 500000,
+    "minCraftProfit": 500000,
 
-    "maxAvgLbinDiff": 0.35,
+    "maxAvgLbinDiff": 3.0,
     "rawCraftMaxWeightPP": 0.4,
     "minSnipePP": 8,
     "minCraftPP": 8,
@@ -23,7 +24,7 @@
     "minPriceForRawcraft": 5000000
   },
   "webhook": {
-    "discordWebhookUrl": "WEBHOOK_URL",
+    "discordWebhookUrl": "https://discord.com/api/webhooks/1247453631180177440/BnmEefyc08UvnL6HH8zEctdzFMLc3dpSgpoHCXpE12k1dd1KS49bEyibJG5BGCWklqqG",
     "webhookName": "Flipper",
     "webhookPFP": "https://cdn.discordapp.com/avatars/486155512568741900/164084b936b4461fe9505398f7383a0e.png?size=4096"
   },
