@@ -18,6 +18,7 @@ const bazaarPrice = {
     "FUMING_POTATO_BOOK": 0
 }
 
+
 async function initialize() {
     matches = config.webhook.discordWebhookUrl.match(webhookRegex)
     if (!matches) return console.log(`[Main thread] Couldn't parse Webhook URL`)
@@ -36,10 +37,12 @@ async function initialize() {
                 maxPrice: maxPrice
             }
         })
-
+    
         workers[j].on("message", async (result) => {
             if (result.itemData !== undefined) {
-                if (result.auctionData.lbin >= result.auctionData.price) {
+                let averagePrice = itemDatas[result.itemData.id]?.cleanPrice || "N/A";
+                if (result.auctionData.lbin - result.auctionData.price >= config.data.minSnipeProfit && averagePrice - result.auctionData.price >= minAvgProfit) {
+                    let mustBuyMessage = '';
                     await webhook.send({
                         username: config.webhook.webhookName,
                         avatarURL: config.webhook.webhookPFP,
@@ -47,7 +50,7 @@ async function initialize() {
                             .setTitle(`**${(result.itemData.name).replaceAll(/§./g, '')}**`)
                             .setColor("#2e3137")
                             .setThumbnail(`https://sky.shiiyu.moe/item/${result.itemData.id}`)
-                            .setDescription(`Auction: \`/viewauction ${result.auctionData.auctionID}\`\nProfit: \`${addNotation("oneLetters", (result.auctionData.profit))} (${result.auctionData.percentProfit}%)\`\nCost: \`${addNotation("oneLetters", (result.auctionData.price))}\`\nLBIN: \`${addNotation("oneLetters", (result.auctionData.lbin))}\`\nSales/Day: \`${addNotation("oneLetters", result.auctionData.sales)}\`\nType: \`${result.auctionData.ahType}\``)
+                            .setDescription(`${mustBuyMessage}\nAuction: \`/viewauction ${result.auctionData.auctionID}\`\nProfit: \`${addNotation("oneLetters", (result.auctionData.profit))} (${result.auctionData.percentProfit}%)\`\nCost: \`${addNotation("oneLetters", (result.auctionData.price))}\`\nLBIN: \`${addNotation("oneLetters", (result.auctionData.lbin))}\`\nSales/Day: \`${addNotation("oneLetters", result.auctionData.sales)}\`\nType: \`${result.auctionData.ahType}\`\nAverage Price: \`${addNotation("oneLetters", averagePrice)}\``)
                         ]
                     })
                     
@@ -63,6 +66,7 @@ async function initialize() {
             }
         });
     }
+    
 
     asyncInterval(async () => {
         await getLBINs()
@@ -110,23 +114,26 @@ async function getLBINs() {
 }
 
 async function getMoulberry() {
-    const moulberryAvgs = await axios.get("https://moulberry.codes/auction_averages/3day.json")
-    const avgData = moulberryAvgs.data
+    // Fetch the original data for sales and clean price information
+    const moulberryAvgs = await axios.get("https://moulberry.codes/auction_averages/3day.json");
+    const avgData = moulberryAvgs.data;
+
+    // Fetch the new clean price data
+    const cleanPriceAvgs = await axios.get("https://moulberry.codes/auction_averages_lbin/1day.json");
+    const cleanPriceData = cleanPriceAvgs.data;
+
     for (const item of Object.keys(avgData)) {
-        itemDatas[item] = {}
-        const itemInfo = avgData[item]
-        if (itemInfo.sales !== undefined) {
-            itemDatas[item].sales = itemInfo.sales
-        } else {
-            itemDatas[item].sales = 0
-        }
-        if (itemInfo.clean_price) {
-            itemDatas[item].cleanPrice = itemInfo.clean_price
-        } else {
-            itemDatas[item].cleanPrice = itemInfo.price
-        }
+        if (!itemDatas[item]) itemDatas[item] = {};
+        const itemInfo = avgData[item];
+
+        // Set sales data
+        itemDatas[item].sales = itemInfo.sales !== undefined ? itemInfo.sales : 0;
+
+        // Set clean price data from the new endpoint if available, otherwise use the old data
+        itemDatas[item].cleanPrice = cleanPriceData[item] !== undefined ? Math.round(cleanPriceData[item]) : (itemInfo.clean_price !== undefined ? itemInfo.clean_price : itemInfo.price);
     }
 }
+
 
 async function getBzData() {
     const bzData = await axios.get("https://api.hypixel.net/skyblock/bazaar")
@@ -134,6 +141,5 @@ async function getBzData() {
     bazaarPrice["HOT_POTATO_BOOK"] = bzData.data.products.HOT_POTATO_BOOK.quick_status.buyPrice
     bazaarPrice["FUMING_POTATO_BOOK"] = bzData.data.products.FUMING_POTATO_BOOK.quick_status.buyPrice
 }
-
 
 initialize()
